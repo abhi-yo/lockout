@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { timestamp, pgTable, text, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -18,19 +18,21 @@ export const users = pgTable("users", {
 
 export const UserSchema = createInsertSchema(users, {
   name: z
-    .string({ message: "Name is a required field " })
+    .string({ required_error: "Name is a required field" })
     .min(3, { message: "Name must be at least 3 characters" }),
   email: z
-    .string({ message: "Email is a required field " })
+    .string({ required_error: "Email is a required field" })
     .email("Must be a valid email")
     .includes("srmist.edu.in", {
       message: "Email must be a SRMIST email",
     }),
-  password: z.string({ message: "Password is a required field " }).min(8, {
-    message: "Password must be at least 8 characters",
-  }),
+  password: z
+    .string({ required_error: "Password is a required field" })
+    .min(8, {
+      message: "Password must be at least 8 characters",
+    }),
   registrationNumber: z
-    .string({ message: "Registration number is a required field " })
+    .string({ required_error: "Registration number is a required field" })
     .includes("RA", {
       message: "Registration number must include 'RA'",
     })
@@ -42,11 +44,40 @@ export const SignInUserSchema = UserSchema.pick({
   password: true,
 });
 
-export const UpdateUserSchema = UserSchema.pick({
-  name: true,
-  password: true,
+export const UpdateUserSchema = z.object({
+  name: z
+    .string()
+    .min(3, { message: "Name must be at least 3 characters" })
+    .optional(),
+  email: z
+    .string()
+    .email("Must be a valid email")
+    .includes("srmist.edu.in", {
+      message: "Email must be a SRMIST email",
+    })
+    .optional(),
+  registrationNumber: z
+    .string()
+    .includes("RA", {
+      message: "Registration number must include 'RA'",
+    })
+    .length(15, { message: "Registration number must be 15 characters" })
+    .optional(),
+  password: z
+    .string()
+    .min(8, {
+      message: "Password must be at least 8 characters",
+    })
+    .optional(),
+}).refine((data) => Object.keys(data).length > 0, {
+  message: "At least one field must be provided for update",
 });
 
-export const DeleteUserSchema = UserSchema.pick({
-  email: true,
+export const DeleteUserSchema = z.object({
+  password: z.string({ required_error: "Password is required for account deletion" }),
 });
+
+export type User = z.infer<typeof UserSchema>;
+export type SignInUser = z.infer<typeof SignInUserSchema>;
+export type UpdateUser = z.infer<typeof UpdateUserSchema>;
+export type DeleteUser = z.infer<typeof DeleteUserSchema>;
