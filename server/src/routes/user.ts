@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { sign } from "hono/jwt";
 import authenticateUser from "../middlewares/authenticate-user";
-import { SignInUserSchema, UpdateUserSchema, users, UserSchema } from "../schema/users";
+import { DeleteUserSchema, SignInUserSchema, UpdateUserSchema, users, UserSchema } from "../schema/users";
 import { JWT_SECRET } from "../utils/config";
 import { db } from "../utils/db";
 
@@ -120,7 +120,7 @@ user.get("/me", authenticateUser, async (c) => {
   return c.json({ success: true, data: { user } });
 });
 
-user.put("/update", authenticateUser, zValidator("json", UpdateUserSchema), async (c) => {
+user.patch("/", authenticateUser, zValidator("json", UpdateUserSchema), async (c) => {
   const { email: currentEmail } = c.get("jwtPayload");
   const updateData = c.req.valid("json");
 
@@ -151,12 +151,21 @@ user.put("/update", authenticateUser, zValidator("json", UpdateUserSchema), asyn
     });
   } catch (error) {
     console.error("Update error:", error);
-    return c.json({ success: false, error: "Failed to update user" }, 500);
+    return c.json({ success: false, error: "Failed to update user", details: error.message }, 500);
   }
 });
 
-user.delete("/delete", authenticateUser, async (c) => {
+user.delete("/", authenticateUser, zValidator("json", DeleteUserSchema), async (c) => {
   const { email } = c.get("jwtPayload");
+  const { password } = c.req.valid("json");
+  const [user] = await db
+    .select({ password: users.password })
+    .from(users)
+    .where(eq(users.email, email));
+
+  if (!user || !Bun.password.verifySync(password, user.password)) {
+    return c.json({ success: false, error: "Invalid password" }, 401);
+  }
 
   const [deletedUser] = await db
     .delete(users)
@@ -172,5 +181,6 @@ user.delete("/delete", authenticateUser, async (c) => {
     message: "Successfully deleted user",
   });
 });
+
 
 export default user;

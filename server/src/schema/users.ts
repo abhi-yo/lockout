@@ -49,20 +49,6 @@ export const UpdateUserSchema = z.object({
     .string()
     .min(3, { message: "Name must be at least 3 characters" })
     .optional(),
-  email: z
-    .string()
-    .email("Must be a valid email")
-    .includes("srmist.edu.in", {
-      message: "Email must be a SRMIST email",
-    })
-    .optional(),
-  registrationNumber: z
-    .string()
-    .includes("RA", {
-      message: "Registration number must include 'RA'",
-    })
-    .length(15, { message: "Registration number must be 15 characters" })
-    .optional(),
   password: z
     .string()
     .min(8, {
@@ -76,8 +62,3 @@ export const UpdateUserSchema = z.object({
 export const DeleteUserSchema = z.object({
   password: z.string({ required_error: "Password is required for account deletion" }),
 });
-
-export type User = z.infer<typeof UserSchema>;
-export type SignInUser = z.infer<typeof SignInUserSchema>;
-export type UpdateUser = z.infer<typeof UpdateUserSchema>;
-export type DeleteUser = z.infer<typeof DeleteUserSchema>;
