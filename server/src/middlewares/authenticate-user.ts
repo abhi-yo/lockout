@@ -1,6 +1,6 @@
 import { createMiddleware } from "hono/factory";
+import { JwtVariables, verify } from "hono/jwt";
 import { JWT_SECRET } from "../utils/config";
-import { verify, JwtVariables } from "hono/jwt";
 
 const authenticateUser = createMiddleware<{
   Variables: JwtVariables<{ email: string; iat: number; exp: number }>;
