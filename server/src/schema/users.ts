@@ -18,21 +18,21 @@ export const users = pgTable("users", {
 
 export const UserSchema = createInsertSchema(users, {
   name: z
-    .string({ required_error: "Name is a required field" })
+    .string({ message: "Name is a required field" })
     .min(3, { message: "Name must be at least 3 characters" }),
   email: z
-    .string({ required_error: "Email is a required field" })
+    .string({ message: "Email is a required field" })
     .email("Must be a valid email")
     .includes("srmist.edu.in", {
       message: "Email must be a SRMIST email",
     }),
   password: z
-    .string({ required_error: "Password is a required field" })
+    .string({ message: "Password is a required field" })
     .min(8, {
       message: "Password must be at least 8 characters",
     }),
   registrationNumber: z
-    .string({ required_error: "Registration number is a required field" })
+    .string({ message: "Registration number is a required field" })
     .includes("RA", {
       message: "Registration number must include 'RA'",
     })
@@ -60,5 +60,5 @@ export const UpdateUserSchema = z.object({
 });
 
 export const DeleteUserSchema = z.object({
-  password: z.string({ required_error: "Password is required for account deletion" }),
+  password: z.string({ message: "Password is required for account deletion" }),
 });

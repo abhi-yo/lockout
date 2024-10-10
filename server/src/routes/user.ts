@@ -162,25 +162,20 @@ user.delete("/", authenticateUser, zValidator("json", DeleteUserSchema), async (
     .select({ password: users.password })
     .from(users)
     .where(eq(users.email, email));
-
   if (!user || !Bun.password.verifySync(password, user.password)) {
     return c.json({ success: false, error: "Invalid password" }, 401);
   }
-
   const [deletedUser] = await db
     .delete(users)
     .where(eq(users.email, email))
     .returning({ id: users.id });
-
   if (!deletedUser) {
     return c.json({ success: false, error: "Failed to delete user" }, 500);
   }
-
   return c.json({
     success: true,
     message: "Successfully deleted user",
   });
 });
-
 
 export default user;
