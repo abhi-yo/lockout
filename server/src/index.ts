@@ -3,6 +3,7 @@ import { PORT } from "./utils/config";
 import { logger } from "hono/logger";
 import { cors } from "hono/cors";
 import * as router from "./routes";
+import payment from "./routes/payment";
 
 const app = new Hono().basePath("/api");
 
@@ -20,6 +21,7 @@ app.get("/healthcheck", (c) => {
 app.route("/user", router.userRouter);
 app.route("/locker", router.lockerRouter);
 app.route("/location", router.locationRouter);
+app.route("/payment", payment);
 app.notFound((c) => c.json({ success: false, message: "Not Found" }));
 
 export default {

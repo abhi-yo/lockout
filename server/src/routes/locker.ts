@@ -15,6 +15,7 @@ import authenticateUser from "../middlewares/authenticate-user";
 import { users } from "../schema/users";
 import { history } from "../schema/history";
 import { lockerItem } from "../schema/locations";
+import { payments } from "../schema/payments";
 
 const locker = new Hono();
 
@@ -170,6 +171,42 @@ locker.post(
   async (c) => {
     const { lockerItemId } = c.req.valid("param");
     const { email } = c.get("jwtPayload");
+    
+    const [userDetails] = await db
+      .select({
+        id: users.id,
+        currentLockerId: users.currentLockerId,
+      })
+      .from(users)
+      .where(eq(users.email, email));
+
+    if (!userDetails) {
+      return c.json({ success: false, error: "User not found" }, 404);
+    }
+
+    if (userDetails.currentLockerId) {
+      return c.json({ success: false, error: "User already has a locker" }, 400);
+    }
+
+    const [latestPayment] = await db
+      .select()
+      .from(payments)
+      .where(
+        and(
+          eq(payments.userId, userDetails.id),
+          eq(payments.status, "completed")
+        )
+      )
+      .orderBy(sql`${payments.createdAt} DESC`)
+      .limit(1);
+
+    if (!latestPayment) {
+      return c.json({
+        success: false,
+        error: "Payment required before acquiring locker",
+        requiresPayment: true
+      }, 400);
+    }
 
     const [selectedLockerItem] = await db
       .select()
